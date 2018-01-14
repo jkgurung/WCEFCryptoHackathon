@@ -8,6 +8,8 @@
   <script src="https://cdn.temasys.io/skylink/skylinkjs/0.6.x/skylink.complete.min.js"></script>
   <script>
       var skylink = new Skylink();
+      var startTime = Date.now();
+      var endTime = Date.now();
 
       // Subscribe all events first as a general guideline
       skylink.on("incomingStream", function (peerId, stream, peerInfo, isSelf) {
@@ -34,17 +36,12 @@
       });
       // init() should always be called first before other methods other than event methods like on() or off().
       skylink.init("4104a99d-08c6-42db-b8f1-7412b31ffca2", function (error, success) {
-        if (success) {
-          /*
-          skylink.joinRoom("my_room", {
-            userData: "My Username",
-            audio: true,
-            video: true
-          });
-          */
+        if (error) {
+          console.log("Couldn't Init Skylink for Video");
         }
       });
 
+      // Function to start video stream
       function start() {
         skylink.joinRoom("my_room", {
             userData: "My Username",
@@ -53,20 +50,40 @@
         }, function (error, success) {
           if (error) return;
           console.log("User connected.");
+          startTime = Date.now();
         });
       }
 
+      // Function to stop video stream
       function stop() {
         skylink.leaveRoom(function (error, success) {
           if (error) return;
           console.log("User disconnected.");
+          endTime = Date.now();
         });
+      }
+
+      function getStart() {
+        console.log("Start Time: ", startTime);
+      }
+
+      function getEnd() {
+        console.log("End Time: ", endTime);
+      }
+
+      function getElapsed() {
+        if (endTime - startTime >= 0) {
+          console.log("Elapsed Time in ms: ", endTime - startTime);
+        }
       }
     </script>
 </head>
 <body>
   <button onclick="start()">Join Room</button><br/>
   <button onclick="stop()">Leave Room</button><br/>
+  <button onclick="getStart()">Get Start</button><br/>
+  <button onclick="getEnd()">Get End</button><br/>
+  <button onclick="getElapsed()">Get Elapsed</button><br/>
   <video id="myvideo" style="transform: rotateY(-180deg);" autoplay muted></video>
 </body>
 </html>
