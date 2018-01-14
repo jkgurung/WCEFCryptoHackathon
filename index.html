@@ -9,47 +9,64 @@
   <script>
       var skylink = new Skylink();
 
-      skylink.on('peerJoined', function(peerId, peerInfo, isSelf) {
-        /* We already have a video element for our video
-         * and don't need to create a new one. */
-        if(isSelf) return;
-        var vid = document.createElement('video');
-        vid.autoplay = true;
-
-        // Added to avoid feedback when testing locally
-        vid.muted = true;
-        vid.id = peerId;
-        document.body.appendChild(vid);
+      // Subscribe all events first as a general guideline
+      skylink.on("incomingStream", function (peerId, stream, peerInfo, isSelf) {
+        if (isSelf) {
+          attachMediaStream(document.getElementById("myvideo"), stream);
+        } else {
+          var peerVideo = document.createElement("video");
+          peerVideo.id = peerId;
+          peerVideo.autoplay = "autoplay";
+          document.getElementById("peersVideo").appendChild(peerVideo);
+          attachMediaStream(peerVideo, stream);
+        }
+      });
+      skylink.on("peerLeft", function (peerId, peerInfo, isSelf) {
+        if (!isSelf) {
+          var peerVideo = document.getElementById(peerId);
+          // do a check if peerVideo exists first
+          if (peerVideo) {
+            document.getElementById("peersVideo").removeChild(peerVideo);
+          } else {
+            console.error("Peer video for " + peerId + " is not found.");
+          }
+        }
+      });
+      // init() should always be called first before other methods other than event methods like on() or off().
+      skylink.init("4104a99d-08c6-42db-b8f1-7412b31ffca2", function (error, success) {
+        if (success) {
+          /*
+          skylink.joinRoom("my_room", {
+            userData: "My Username",
+            audio: true,
+            video: true
+          });
+          */
+        }
       });
 
-      skylink.on('incomingStream', function(peerId, stream, isSelf) {
-        if(isSelf) return;
-        var vid = document.getElementById(peerId);
-        attachMediaStream(vid, stream);
-      });
-
-      skylink.on('peerLeft', function(peerId, peerInfo, isSelf) {
-        var vid = document.getElementById(peerId);
-        document.body.removeChild(vid);
-      });
-
-      skylink.on('mediaAccessSuccess', function(stream) {
-        var vid = document.getElementById('myvideo'); attachMediaStream(vid, stream);
-      });
-
-      skylink.init({
-        apiKey: '4104a99d-08c6-42db-b8f1-7412b31ffca2',
-        defaultRoom: 'My Room'
-      }, function() {
-        skylink.joinRoom({
-          audio: true,
-          video: true
+      function start() {
+        skylink.joinRoom("my_room", {
+            userData: "My Username",
+            audio: true,
+            video: true
+        }, function (error, success) {
+          if (error) return;
+          console.log("User connected.");
         });
-      });
+      }
+
+      function stop() {
+        skylink.leaveRoom(function (error, success) {
+          if (error) return;
+          console.log("User disconnected.");
+        });
+      }
     </script>
 </head>
 <body>
-  <button onclick="start()">Share Screen</button><br/>
+  <button onclick="start()">Join Room</button><br/>
+  <button onclick="stop()">Leave Room</button><br/>
   <video id="myvideo" style="transform: rotateY(-180deg);" autoplay muted></video>
 </body>
 </html>
